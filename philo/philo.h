@@ -6,7 +6,7 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:24 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/05/29 14:02:36 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/05/29 14:27:23 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,8 @@ int		init_philosophers(t_data *data);
 /* simulation.c */
 int		start_simulation(t_data *data);
 void	*monitor_death(void *arg);
+int		check_philosopher_deaths(t_data *data);
+int		check_all_ate_enough(t_data *data);
 
 /* philosopher.c */
 void	*philosopher_routine(void *arg);
@@ -79,5 +81,6 @@ long	get_time_ms(void);
 void	precise_sleep(long duration);
 void	print_status(t_philo *philo, char *status);
 int		is_simulation_end(t_data *data);
+void	set_simulation_end(t_data *data);
 
 #endif
