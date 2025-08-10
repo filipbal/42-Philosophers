@@ -6,7 +6,7 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:17 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/08/10 18:43:27 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:50:06 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,9 @@ int	init_data(t_data *data, char **argv)
 	else
 		data->must_eat_count = -1;
 	data->simulation_end = 0;
-	if (data->num_philos < 1 || data->num_philos > 200
-		|| data->time_to_die < 1 || data->time_to_eat < 1
+	if (data->num_philos < 1
+		|| data->time_to_die < 1
+		|| data->time_to_eat < 1
 		|| data->time_to_sleep < 1)
 		return (0);
 	if (argv[5] && data->must_eat_count < 1)
