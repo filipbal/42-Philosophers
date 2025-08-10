@@ -6,7 +6,7 @@
 #    By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/05/29 13:57:22 by fbalakov          #+#    #+#              #
-#    Updated: 2025/05/29 14:22:24 by fbalakov         ###   ########.fr        #
+#    Updated: 2025/08/10 18:01:19 by fbalakov         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,29 +14,25 @@ NAME = philo
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -pthread
-RM = rm -f
 
 SRCDIR = .
-OBJDIR = obj
+SOURCES = main.c init.c utils.c philosopher.c
 
-SOURCES = main.c init.c utils.c philosopher.c simulation.c
-
-OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
+OBJECTS = $(SOURCES:.c=.o)
 
 all: $(NAME)
 
 $(NAME): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $(NAME)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJECTS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(OBJDIR)
+%.o: %.c philo.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(RM) -r $(OBJDIR)
+	rm -f $(OBJECTS)
 
 fclean: clean
-	$(RM) $(NAME)
+	rm -f $(NAME)
 
 re: fclean all
 

@@ -6,77 +6,104 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:20 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/05/29 14:23:20 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:19:38 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-int	main(int argc, char **argv)
+/* Check if arguments are valid positive integers */
+static int	validate_args(char **argv)
 {
-	t_data	data;
-	t_args	args;
+	int	i;
+	int	j;
 
-	if (parse_arguments(argc, argv, &args) != 0)
+	i = 1;
+	while (argv[i])
 	{
-		printf("Usage: %s num_philos time_to_die time_to_eat ", argv[0]);
-		printf("time_to_sleep [must_eat_count]\n");
-		return (1);
+		j = 0;
+		while (argv[i][j])
+		{
+			if (argv[i][j] < '0' || argv[i][j] > '9')
+				return (0);
+			j++;
+		}
+		if (ft_atoi(argv[i]) <= 0)
+			return (0);
+		i++;
 	}
-	if (init_data(&data, &args) != 0)
-	{
-		printf("Error: Failed to initialize data\n");
-		return (1);
-	}
-	if (start_simulation(&data) != 0)
-	{
-		printf("Error: Simulation failed\n");
-		cleanup_and_exit(&data, 1);
-	}
-	cleanup_and_exit(&data, 0);
-	return (0);
+	return (1);
 }
 
-int	parse_arguments(int argc, char **argv, t_args *args)
-{
-	if (argc < 5 || argc > 6)
-		return (1);
-	args->num_philos = atoi(argv[1]);
-	args->time_to_die = atoi(argv[2]);
-	args->time_to_eat = atoi(argv[3]);
-	args->time_to_sleep = atoi(argv[4]);
-	if (args->num_philos <= 0 || args->time_to_die <= 0
-		|| args->time_to_eat <= 0 || args->time_to_sleep <= 0)
-		return (1);
-	if (argc == 6)
-	{
-		args->must_eat_count = atoi(argv[5]);
-		if (args->must_eat_count <= 0)
-			return (1);
-		args->has_must_eat = 1;
-	}
-	else
-		args->has_must_eat = 0;
-	return (0);
-}
-
-void	cleanup_and_exit(t_data *data, int exit_code)
+/* Start simulation by creating philosopher threads */
+static int	start_simulation(t_data *data)
 {
 	int	i;
 
-	if (data->forks)
+	data->start_time = get_time();
+	i = 0;
+	while (i < data->num_philos)
 	{
-		i = 0;
-		while (i < data->args.num_philos)
-		{
-			pthread_mutex_destroy(&data->forks[i]);
-			i++;
-		}
-		free(data->forks);
+		data->philos[i].last_meal_time = data->start_time;
+		if (pthread_create(&data->philos[i].thread, NULL,
+				philosopher_routine, &data->philos[i]) != 0)
+			return (0);
+		i++;
 	}
-	pthread_mutex_destroy(&data->print_mutex);
-	pthread_mutex_destroy(&data->death_mutex);
-	if (data->philos)
-		free(data->philos);
-	exit(exit_code);
+	return (1);
+}
+
+/* Monitor philosophers for death or completion */
+static void	monitor_simulation(t_data *data)
+{
+	int		i;
+	int		done;
+	long	now;
+
+	while (!data->simulation_end)
+	{
+		i = -1;
+		done = 1;
+		while (++i < data->num_philos && !data->simulation_end)
+		{
+			now = get_time();
+			if (now - data->philos[i].last_meal_time > data->time_to_die)
+			{
+				print_status(&data->philos[i], "died");
+				data->simulation_end = 1;
+				break ;
+			}
+			if (data->must_eat_count != -1
+				&& data->philos[i].meals_eaten < data->must_eat_count)
+				done = 0;
+		}
+		if (data->must_eat_count != -1 && done)
+			data->simulation_end = 1;
+		usleep(1000);
+	}
+}
+
+int	main(int argc, char **argv)
+{
+	t_data	data;
+	int		i;
+
+	if (argc != 5 && argc != 6)
+	{
+		printf("Usage: ./philo num_philos time_die time_eat time_sleep"
+			" [must_eat_count]\n");
+		return (1);
+	}
+	if (!validate_args(argv) || !init_data(&data, argv)
+		|| !init_philos(&data) || !start_simulation(&data))
+	{
+		cleanup(&data);
+		return (1);
+	}
+	monitor_simulation(&data);
+	i = 0;
+	while (i < data.num_philos)
+		pthread_join(data.philos[i++].thread, NULL);
+	cleanup(&data);
+	return (0);
 }

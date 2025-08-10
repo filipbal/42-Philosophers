@@ -6,64 +6,73 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:30 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/05/29 14:23:34 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:00:28 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-long	get_time_ms(void)
+/* Convert string to integer */
+int	ft_atoi(const char *str)
+{
+	int	result;
+	int	sign;
+	int	i;
+
+	result = 0;
+	sign = 1;
+	i = 0;
+	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
+		i++;
+	if (str[i] == '-' || str[i] == '+')
+	{
+		if (str[i] == '-')
+			sign = -1;
+		i++;
+	}
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		result = result * 10 + (str[i] - '0');
+		i++;
+	}
+	return (result * sign);
+}
+
+/* Get current time in milliseconds */
+long	get_time(void)
 {
 	struct timeval	tv;
 
 	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
-void	precise_sleep(long duration)
+/* Precise sleep function using microseconds */
+void	ft_usleep(int ms)
 {
-	long	start_time;
-	long	elapsed;
+	long	start;
+	long	current;
 
-	start_time = get_time_ms();
+	start = get_time();
 	while (1)
 	{
-		elapsed = get_time_ms() - start_time;
-		if (elapsed >= duration)
+		current = get_time();
+		if (current - start >= ms)
 			break ;
-		if (duration - elapsed > 10)
-			usleep((duration - elapsed) * 500);
-		else
-			usleep(100);
+		usleep(100);
 	}
 }
 
+/* Print philosopher status with timestamp */
 void	print_status(t_philo *philo, char *status)
 {
 	long	timestamp;
 
 	pthread_mutex_lock(&philo->data->print_mutex);
-	if (!is_simulation_end(philo->data))
+	if (!philo->data->simulation_end)
 	{
-		timestamp = get_time_ms() - philo->data->start_time;
+		timestamp = get_time() - philo->data->start_time;
 		printf("%ld %d %s\n", timestamp, philo->id, status);
 	}
 	pthread_mutex_unlock(&philo->data->print_mutex);
-}
-
-int	is_simulation_end(t_data *data)
-{
-	int	result;
-
-	pthread_mutex_lock(&data->death_mutex);
-	result = data->simulation_end;
-	pthread_mutex_unlock(&data->death_mutex);
-	return (result);
-}
-
-void	set_simulation_end(t_data *data)
-{
-	pthread_mutex_lock(&data->death_mutex);
-	data->simulation_end = 1;
-	pthread_mutex_unlock(&data->death_mutex);
 }
