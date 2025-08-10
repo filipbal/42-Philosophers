@@ -6,7 +6,7 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:17 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/08/10 18:00:18 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:43:27 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,25 @@ int	init_data(t_data *data, char **argv)
 	else
 		data->must_eat_count = -1;
 	data->simulation_end = 0;
-	if (data->num_philos < 1 || data->num_philos > 200)
+	if (data->num_philos < 1 || data->num_philos > 200
+		|| data->time_to_die < 1 || data->time_to_eat < 1
+		|| data->time_to_sleep < 1)
+		return (0);
+	if (argv[5] && data->must_eat_count < 1)
 		return (0);
 	return (1);
+}
+
+/* Clean up fork mutexes on initialization failure */
+static void	cleanup_fork_init(t_data *data, int count)
+{
+	int	i;
+
+	i = 0;
+	while (i < count)
+		pthread_mutex_destroy(&data->forks[i++]);
+	free(data->forks);
+	data->forks = NULL;
 }
 
 /* Initialize mutex for each fork */
@@ -42,13 +58,18 @@ static int	init_forks(t_data *data)
 	while (i < data->num_philos)
 	{
 		if (pthread_mutex_init(&data->forks[i], NULL) != 0)
+		{
+			cleanup_fork_init(data, i);
 			return (0);
+		}
 		i++;
 	}
-	if (pthread_mutex_init(&data->print_mutex, NULL) != 0)
+	if (pthread_mutex_init(&data->print_mutex, NULL) != 0
+		|| pthread_mutex_init(&data->death_mutex, NULL) != 0)
+	{
+		cleanup_fork_init(data, data->num_philos);
 		return (0);
-	if (pthread_mutex_init(&data->death_mutex, NULL) != 0)
-		return (0);
+	}
 	return (1);
 }
 
@@ -88,9 +109,13 @@ void	cleanup(t_data *data)
 		while (i < data->num_philos)
 			pthread_mutex_destroy(&data->forks[i++]);
 		free(data->forks);
+		data->forks = NULL;
 	}
 	pthread_mutex_destroy(&data->print_mutex);
 	pthread_mutex_destroy(&data->death_mutex);
 	if (data->philos)
+	{
 		free(data->philos);
+		data->philos = NULL;
+	}
 }

@@ -6,29 +6,42 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:20 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/08/10 18:19:38 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:34:21 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+/* Check if string is a valid positive integer */
+static int	is_valid_number(char *str)
+{
+	int	i;
+
+	if (!str || !str[0])
+		return (0);
+	i = 0;
+	while (str[i])
+	{
+		if (str[i] < '0' || str[i] > '9')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
 /* Check if arguments are valid positive integers */
 static int	validate_args(char **argv)
 {
 	int	i;
-	int	j;
+	int	value;
 
 	i = 1;
 	while (argv[i])
 	{
-		j = 0;
-		while (argv[i][j])
-		{
-			if (argv[i][j] < '0' || argv[i][j] > '9')
-				return (0);
-			j++;
-		}
-		if (ft_atoi(argv[i]) <= 0)
+		if (!is_valid_number(argv[i]))
+			return (0);
+		value = ft_atoi(argv[i]);
+		if (value <= 0)
 			return (0);
 		i++;
 	}
@@ -90,12 +103,16 @@ int	main(int argc, char **argv)
 
 	if (argc != 5 && argc != 6)
 	{
-		printf("Usage: ./philo num_philos time_die time_eat time_sleep"
-			" [must_eat_count]\n");
+		printf("./philo num_philos t_die t_eat t_sleep [must_eat_count]\n");
 		return (1);
 	}
-	if (!validate_args(argv) || !init_data(&data, argv)
-		|| !init_philos(&data) || !start_simulation(&data))
+	if (!validate_args(argv))
+	{
+		printf("Error: Invalid args. All values must be positive integers.\n");
+		return (1);
+	}
+	if (!init_data(&data, argv) || !init_philos(&data)
+		|| !start_simulation(&data))
 	{
 		cleanup(&data);
 		return (1);

@@ -6,19 +6,21 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:30 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/08/10 18:00:28 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:34:44 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-/* Convert string to integer */
+/* Convert string to integer with overflow protection */
 int	ft_atoi(const char *str)
 {
-	int	result;
-	int	sign;
-	int	i;
+	long	result;
+	int		sign;
+	int		i;
 
+	if (!str)
+		return (0);
 	result = 0;
 	sign = 1;
 	i = 0;
@@ -33,9 +35,11 @@ int	ft_atoi(const char *str)
 	while (str[i] >= '0' && str[i] <= '9')
 	{
 		result = result * 10 + (str[i] - '0');
+		if (result > 2147483647)
+			return (0);
 		i++;
 	}
-	return (result * sign);
+	return ((int)(result * sign));
 }
 
 /* Get current time in milliseconds */
@@ -43,7 +47,8 @@ long	get_time(void)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
+	if (gettimeofday(&tv, NULL) != 0)
+		return (0);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
@@ -68,6 +73,8 @@ void	print_status(t_philo *philo, char *status)
 {
 	long	timestamp;
 
+	if (!philo || !philo->data || !status)
+		return ;
 	pthread_mutex_lock(&philo->data->print_mutex);
 	if (!philo->data->simulation_end)
 	{

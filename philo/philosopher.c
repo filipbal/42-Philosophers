@@ -6,7 +6,7 @@
 /*   By: fbalakov <fbalakov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:26 by fbalakov          #+#    #+#             */
-/*   Updated: 2025/08/10 18:00:37 by fbalakov         ###   ########.fr       */
+/*   Updated: 2025/08/10 18:34:51 by fbalakov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,11 @@ static void	take_forks(t_philo *philo)
 	{
 		pthread_mutex_lock(philo->right_fork);
 		print_status(philo, "has taken a fork");
+		if (philo->data->simulation_end)
+		{
+			pthread_mutex_unlock(philo->right_fork);
+			return ;
+		}
 		pthread_mutex_lock(philo->left_fork);
 		print_status(philo, "has taken a fork");
 	}
@@ -26,6 +31,11 @@ static void	take_forks(t_philo *philo)
 	{
 		pthread_mutex_lock(philo->left_fork);
 		print_status(philo, "has taken a fork");
+		if (philo->data->simulation_end)
+		{
+			pthread_mutex_unlock(philo->left_fork);
+			return ;
+		}
 		pthread_mutex_lock(philo->right_fork);
 		print_status(philo, "has taken a fork");
 	}
@@ -35,6 +45,12 @@ static void	take_forks(t_philo *philo)
 static void	eat(t_philo *philo)
 {
 	take_forks(philo);
+	if (philo->data->simulation_end)
+	{
+		pthread_mutex_unlock(philo->left_fork);
+		pthread_mutex_unlock(philo->right_fork);
+		return ;
+	}
 	print_status(philo, "is eating");
 	pthread_mutex_lock(&philo->data->death_mutex);
 	philo->last_meal_time = get_time();
@@ -69,6 +85,8 @@ void	*philosopher_routine(void *arg)
 	t_philo	*philo;
 
 	philo = (t_philo *)arg;
+	if (!philo || !philo->data)
+		return (NULL);
 	if (philo->data->num_philos == 1)
 		return (single_philo(philo));
 	if (philo->id % 2 == 0)
